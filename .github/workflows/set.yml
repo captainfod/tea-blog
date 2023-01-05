@@ -1,0 +1,53 @@
+# name字段是 workflow 的名称。
+# 如果省略该字段，默认为当前 workflow 的文件名。
+name: tea-blog
+
+# on字段指定触发 workflow 的条件，通常是某些事件。
+on:
+  # push事件触发 workflow
+  push:
+    branches: 
+    # 只有master分支发生push事件时，才会触发 workflow
+      - master
+  # 手动触发部署
+  # workflow_dispatch:
+
+# workflow 文件的主体是jobs字段，表示要执行的一项或多项任务。
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest # 指定运行所需要的虚拟机环境。（必填字段）
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # “最近更新时间” 等 git 日志相关信息，需要拉取全部提交记录
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          # 选择要使用的 node 版本
+          node-version: '14'
+
+      - name: Install npm
+        run: npm install
+
+      # 运行构建脚本
+      - name: Build VuePress site
+        run: npm start
+
+      # 查看 workflow 的文档来获取更多信息
+      # @see https://github.com/crazy-max/ghaction-github-pages
+      - name: Deploy to GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          # 将要部署资产的 GitHub 存储库（默认$GITHUB_REPOSITORY）
+          repo: 用户名/仓库名
+          # 部署到 gh-pages 分支
+          target_branch: gh-pages
+          # 部署目录为 VuePress 的默认输出目录
+          build_dir: dist
+        env:
+          # @see https://docs.github.com/cn/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
+          GITHUB_TOKEN: ${{ secrets.PRESS_TOKEN }}
+

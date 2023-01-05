@@ -1,0 +1,81 @@
+# name字段是 workflow 的名称。
+# 如果省略该字段，默认为当前 workflow 的文件名。
+name: tea-blog
+
+# on字段指定触发 workflow 的条件，通常是某些事件。
+on:
+  # push事件触发 workflow
+  push:
+    branches: 
+    # 只有master分支发生push事件时，才会触发 workflow
+      - master
+  # 手动触发部署
+  # workflow_dispatch:
+
+# workflow 文件的主体是jobs字段，表示要执行的一项或多项任务。
+
+jobs:
+  # jobs字段里面，需要写出每一项任务的job_id，具体名称自定义。
+  tea-1: # 自定义 job_id 为 tea-blog-job1
+    name: tea-1的说明情况 # job_id里面的name字段是任务的说明。
+    runs-on: ubuntu-latest # 指定运行所需要的虚拟机环境。（必填字段）
+    steps: # 指定每个 Job 的运行步骤，可以包含一个或多个步骤。
+      - name: Setup Node.js # 步骤名称
+        env: # 环境变量
+              
+        run: # 运行的命令或者 action
+
+  tea-2:
+    name: tea-2的说明情况
+    # needs: tea-1 #（必须要先完成 tea-1） needs字段指定当前任务的依赖关系，即运行顺序。
+  docs:
+
+    runs-on: ubuntu-latest # 指定运行所需要的虚拟机环境。（必填字段）
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # “最近更新时间” 等 git 日志相关信息，需要拉取全部提交记录
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          # 选择要使用的 node 版本
+          node-version: '16'
+
+      # 缓存 node_modules
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      # 如果缓存没有命中，安装依赖
+      - name: Install dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn --frozen-lockfile
+
+      # 运行构建脚本
+      - name: Build VuePress site
+        run: yarn docs:build
+
+      # 查看 workflow 的文档来获取更多信息
+      # @see https://github.com/crazy-max/ghaction-github-pages
+      - name: Deploy to GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          # 将要部署资产的 GitHub 存储库（默认$GITHUB_REPOSITORY）
+          repo: 用户名/仓库名
+          # 部署到 gh-pages 分支
+          target_branch: gh-pages
+          # 部署目录为 VuePress 的默认输出目录
+          build_dir: dist
+        env:
+          # @see https://docs.github.com/cn/actions/reference/authentication-in-a-workflow#about-the-github_token-secret
+          GITHUB_TOKEN: ${{ secrets.PRESS_TOKEN }}
+
