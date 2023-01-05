@@ -16,7 +16,8 @@ on:
 
 jobs:
   tea-blog-1:
-    runs-on: ubuntu-latest # 指定运行所需要的虚拟机环境。（必填字段）
+  # 指定运行所需要的虚拟机环境。（必填字段）
+    runs-on: ubuntu-latest 
     steps:
       - uses: actions/checkout@v2
         with:
